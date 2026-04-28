@@ -1,15 +1,58 @@
 @import "tailwindcss";
 
-@theme {
+:root {
+  --background: #ffffff;
+  --surface: #f7f6f2;
+  --surface-hover: #edebe5;
+  --foreground: #1a1a1a;
+  --foreground-muted: #5f5e5a;
+  --foreground-subtle: #9a9994;
+  --border: rgba(0, 0, 0, 0.1);
+  --border-strong: rgba(0, 0, 0, 0.15);
+  --accent: #1a1a1a;
+  --accent-foreground: #ffffff;
+  --danger: #c0392b;
+  --success: #2d7a4f;
+}
+
+[data-theme="dark"] {
+  --background: #0f0f0f;
+  --surface: #1a1a1a;
+  --surface-hover: #252525;
+  --foreground: #f0f0f0;
+  --foreground-muted: #a0a09a;
+  --foreground-subtle: #6a6a64;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.15);
+  --accent: #f0f0f0;
+  --accent-foreground: #0f0f0f;
+  --danger: #e05540;
+  --success: #3d9a6a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-hover: var(--surface-hover);
+  --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-foreground-subtle: var(--foreground-subtle);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
+  --radius-md: 8px;
+  --radius-lg: 12px;
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
     "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
 }
 
 html,
 body {
-  @apply bg-white dark:bg-gray-950;
-
-  @media (prefers-color-scheme: dark) {
-    color-scheme: dark;
-  }
+  font-family: var(--font-sans);
+  font-size: 14px;
+  background-color: var(--background);
+  color: var(--foreground);
 }

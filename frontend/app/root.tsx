@@ -9,6 +9,8 @@ import {
 
 import type { Route } from "./+types/root";
 import "./app.css";
+import { ToastProvider } from "~/contexts/toast-context";
+import { Sidebar } from "~/components/layout/sidebar";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -42,7 +44,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <ToastProvider>
+      <div className="flex min-h-screen bg-background">
+        <Sidebar />
+        <main className="flex-1 overflow-auto">
+          <div className="max-w-[1200px] mx-auto px-8 py-8">
+            <Outlet />
+          </div>
+        </main>
+      </div>
+    </ToastProvider>
+  );
 }
 
 export function ErrorBoundary({ error }: Route.ErrorBoundaryProps) {

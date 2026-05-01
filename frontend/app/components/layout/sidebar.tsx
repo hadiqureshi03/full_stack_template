@@ -3,7 +3,7 @@ import { cn } from "~/utils/cn";
 
 const adminLinks = [
   { to: "/perioder", label: "Perioder" },
-  { to: "/brugere", label: "Brugere" },
+  { to: "/adgangsstyring", label: "Adgangsstyring" },
   { to: "/afsnit", label: "Afsnit" },
   { to: "/personalegrupper", label: "Personalegrupper" },
   { to: "/vagtlag", label: "Vagtlag" },

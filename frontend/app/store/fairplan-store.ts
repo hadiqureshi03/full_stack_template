@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
 import type { Afsnit, Ansaettelse, Personalegruppe, Periode, User, Vagtlag } from "~/types";
 import {
   initialAfsnit,
@@ -48,7 +49,9 @@ type FairplanState = {
   deleteAnsaettelse: (id: string) => void;
 };
 
-export const useFairplanStore = create<FairplanState>()((set) => ({
+export const useFairplanStore = create<FairplanState>()(
+  persist(
+    (set) => ({
   perioder: initialPerioder,
   users: initialUsers,
   afsnit: initialAfsnit,
@@ -110,4 +113,19 @@ export const useFairplanStore = create<FairplanState>()((set) => ({
     })),
   deleteAnsaettelse: (id) =>
     set((s) => ({ ansaettelser: s.ansaettelser.filter((a) => a.id !== id) })),
-}));
+    }),
+    {
+      name: "fairplan-storage",
+      storage: createJSONStorage(() => localStorage),
+      skipHydration: true,
+      partialize: (state) => ({
+        perioder: state.perioder,
+        users: state.users,
+        afsnit: state.afsnit,
+        personalegrupper: state.personalegrupper,
+        vagtlag: state.vagtlag,
+        ansaettelser: state.ansaettelser,
+      }),
+    }
+  )
+);

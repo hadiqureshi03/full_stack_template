@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   isRouteErrorResponse,
   Links,
@@ -14,6 +14,7 @@ import "./app.css";
 import { ToastProvider } from "~/contexts/toast-context";
 import { ThemeProvider } from "~/contexts/theme-context";
 import { Sidebar } from "~/components/layout/sidebar";
+import { useFairplanStore } from "~/store/fairplan-store";
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -56,6 +57,10 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    useFairplanStore.persist.rehydrate();
+  }, []);
 
   return (
     <ThemeProvider>

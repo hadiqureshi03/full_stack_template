@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   isRouteErrorResponse,
   Links,
@@ -6,10 +7,12 @@ import {
   Scripts,
   ScrollRestoration,
 } from "react-router";
+import { Menu } from "lucide-react";
 
 import type { Route } from "./+types/root";
 import "./app.css";
 import { ToastProvider } from "~/contexts/toast-context";
+import { ThemeProvider } from "~/contexts/theme-context";
 import { Sidebar } from "~/components/layout/sidebar";
 
 export const links: Route.LinksFunction = () => [
@@ -33,6 +36,14 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
+        <script dangerouslySetInnerHTML={{ __html: `
+          (function(){
+            var t=localStorage.getItem('theme');
+            if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme:dark)').matches)){
+              document.documentElement.setAttribute('data-theme','dark');
+            }
+          })();
+        `}} />
       </head>
       <body>
         {children}
@@ -44,17 +55,33 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   return (
+    <ThemeProvider>
     <ToastProvider>
       <div className="flex min-h-screen bg-background">
-        <Sidebar />
-        <main className="flex-1 overflow-auto">
-          <div className="max-w-[1200px] mx-auto px-8 py-8">
-            <Outlet />
+        <Sidebar mobileOpen={sidebarOpen} onMobileClose={() => setSidebarOpen(false)} />
+        <div className="flex-1 flex flex-col min-w-0">
+          <div className="md:hidden sticky top-0 z-30 h-14 bg-background border-b border-border flex items-center px-4">
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="text-foreground-muted hover:text-foreground transition-colors"
+              aria-label="Åbn menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <span className="ml-3 text-[18px] font-semibold text-foreground">Fairplan</span>
           </div>
-        </main>
+          <main className="flex-1 overflow-auto">
+            <div className="max-w-[1200px] mx-auto px-8 py-8">
+              <Outlet />
+            </div>
+          </main>
+        </div>
       </div>
     </ToastProvider>
+    </ThemeProvider>
   );
 }
 

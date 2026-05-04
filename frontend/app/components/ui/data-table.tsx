@@ -147,7 +147,7 @@ export function DataTable<T>({
         </thead>
         <tbody>
           {sorted.map((item) => (
-            <tr key={getKey(item)} className="border-b border-border last:border-0 hover:bg-surface transition-colors">
+            <tr key={getKey(item)} className="border-b border-border last:border-0 even:bg-surface hover:bg-surface-hover transition-colors">
               {columns.map((col) => (
                 <td key={col.key} className="px-4 py-3 text-sm text-foreground">
                   {col.render

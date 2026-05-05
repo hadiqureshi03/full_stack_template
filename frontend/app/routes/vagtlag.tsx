@@ -12,16 +12,18 @@ import { ConfirmDialog } from "~/components/ui/confirm-dialog";
 import { ErrorBanner } from "~/components/ui/error-banner";
 import { Input } from "~/components/ui/input";
 
+// Formularens felter og en tom standardværdi
 type FormState = { navn: string };
 type FormErrors = Partial<FormState>;
-
 const emptyForm: FormState = { navn: "" };
 
 export default function Vagtlag() {
+  // Data og handlinger fra store via hooks
   const { vagtlag, addVagtlag, updateVagtlag, deleteVagtlag } = useVagtlag();
   const { ansaettelser } = useAnsaettelser();
   const { toast } = useToast();
 
+  // UI-tilstande
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Vagtlag | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Vagtlag | null>(null);
@@ -29,6 +31,7 @@ export default function Vagtlag() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<FormErrors>({});
 
+  // Åbner modal til oprettelse
   function openCreate() {
     setEditingItem(null);
     setForm(emptyForm);
@@ -36,6 +39,7 @@ export default function Vagtlag() {
     setModalOpen(true);
   }
 
+  // Åbner modal til redigering med eksisterende data
   function openEdit(vl: Vagtlag) {
     setEditingItem(vl);
     setForm({ navn: vl.navn });
@@ -43,6 +47,7 @@ export default function Vagtlag() {
     setModalOpen(true);
   }
 
+  // Validerer at navn er udfyldt
   function validate(): boolean {
     const newErrors: FormErrors = {};
     const navnError = validateRequired(form.navn, "Navn");
@@ -51,6 +56,7 @@ export default function Vagtlag() {
     return Object.keys(newErrors).length === 0;
   }
 
+  // Opretter nyt eller opdaterer eksisterende vagtlag
   function handleSubmit() {
     if (!validate()) return;
     if (editingItem) {
@@ -63,6 +69,7 @@ export default function Vagtlag() {
     setModalOpen(false);
   }
 
+  // Blokerer sletning hvis vagtlaget bruges i en ansættelse
   function handleDeleteRequest(vl: Vagtlag) {
     const inUse = ansaettelser.some((a) => a.vagtlagId === vl.id);
     if (inUse) {
@@ -73,6 +80,7 @@ export default function Vagtlag() {
     setDeleteTarget(vl);
   }
 
+  // Udfører sletning efter bekræftelse
   function handleDelete() {
     if (!deleteTarget) return;
     deleteVagtlag(deleteTarget.id);
@@ -88,6 +96,7 @@ export default function Vagtlag() {
     <>
       <PageHeader title="Vagtlag" onAdd={openCreate} addLabel="Tilføj vagtlag" />
 
+      {/* Vises kun ved blokeret sletning */}
       {blockError && (
         <div className="mb-4">
           <ErrorBanner message={blockError} onDismiss={() => setBlockError(null)} />
@@ -104,6 +113,7 @@ export default function Vagtlag() {
         isLoading={false}
       />
 
+      {/* Modal til oprettelse og redigering — titel skifter efter kontekst */}
       <FormModal
         open={modalOpen}
         onOpenChange={setModalOpen}
@@ -120,6 +130,7 @@ export default function Vagtlag() {
         />
       </FormModal>
 
+      {/* Bekræftelsesdialog ved sletning */}
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}

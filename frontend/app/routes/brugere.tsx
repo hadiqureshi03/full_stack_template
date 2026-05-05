@@ -11,32 +11,29 @@ import { ConfirmDialog } from "~/components/ui/confirm-dialog";
 import { Input } from "~/components/ui/input";
 import { Checkbox } from "~/components/ui/checkbox";
 
+// Formularens felter og en tom standardværdi
 type FormState = {
   navn: string;
   email: string;
   rolleAdmin: boolean;
   rollePersonale: boolean;
 };
-
 type FormErrors = Partial<Pick<FormState, "navn" | "email">>;
-
-const emptyForm: FormState = {
-  navn: "",
-  email: "",
-  rolleAdmin: false,
-  rollePersonale: false,
-};
+const emptyForm: FormState = { navn: "", email: "", rolleAdmin: false, rollePersonale: false };
 
 export default function Brugere() {
+  // Data og handlinger fra store via hooks
   const { users, addUser, updateUser, deleteUser } = useUsers();
   const { toast } = useToast();
 
+  // UI-tilstande
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<User | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<FormErrors>({});
 
+  // Åbner modal til oprettelse
   function openCreate() {
     setEditingItem(null);
     setForm(emptyForm);
@@ -44,18 +41,15 @@ export default function Brugere() {
     setModalOpen(true);
   }
 
+  // Åbner modal til redigering med eksisterende data
   function openEdit(user: User) {
     setEditingItem(user);
-    setForm({
-      navn: user.navn,
-      email: user.email,
-      rolleAdmin: user.rolleAdmin,
-      rollePersonale: user.rollePersonale,
-    });
+    setForm({ navn: user.navn, email: user.email, rolleAdmin: user.rolleAdmin, rollePersonale: user.rollePersonale });
     setErrors({});
     setModalOpen(true);
   }
 
+  // Validerer navn og email — email tjekkes også for unikhed mod eksisterende brugere
   function validate(): boolean {
     const newErrors: FormErrors = {};
     const navnError = validateRequired(form.navn, "Navn");
@@ -66,6 +60,7 @@ export default function Brugere() {
     return Object.keys(newErrors).length === 0;
   }
 
+  // Opretter ny eller opdaterer eksisterende bruger
   function handleSubmit() {
     if (!validate()) return;
     if (editingItem) {
@@ -78,6 +73,7 @@ export default function Brugere() {
     setModalOpen(false);
   }
 
+  // Sletter bruger — cascade delete i storen fjerner også tilknyttede ansættelser
   function handleDelete() {
     if (!deleteTarget) return;
     deleteUser(deleteTarget.id);
@@ -88,16 +84,8 @@ export default function Brugere() {
   const columns: Column<User>[] = [
     { key: "navn", header: "Navn", sortable: true },
     { key: "email", header: "Email", sortable: true },
-    {
-      key: "rolleAdmin",
-      header: "Admin",
-      render: (u) => (u.rolleAdmin ? "Ja" : "Nej"),
-    },
-    {
-      key: "rollePersonale",
-      header: "Personale",
-      render: (u) => (u.rollePersonale ? "Ja" : "Nej"),
-    },
+    { key: "rolleAdmin", header: "Admin", render: (u) => (u.rolleAdmin ? "Ja" : "Nej") },
+    { key: "rollePersonale", header: "Personale", render: (u) => (u.rollePersonale ? "Ja" : "Nej") },
   ];
 
   return (
@@ -114,6 +102,7 @@ export default function Brugere() {
         isLoading={false}
       />
 
+      {/* Modal til oprettelse og redigering — titel skifter efter kontekst */}
       <FormModal
         open={modalOpen}
         onOpenChange={setModalOpen}
@@ -141,20 +130,17 @@ export default function Brugere() {
           <Checkbox
             label="Administrator"
             checked={form.rolleAdmin}
-            onCheckedChange={(checked) =>
-              setForm((f) => ({ ...f, rolleAdmin: checked === true }))
-            }
+            onCheckedChange={(checked) => setForm((f) => ({ ...f, rolleAdmin: checked === true }))}
           />
           <Checkbox
             label="Personale"
             checked={form.rollePersonale}
-            onCheckedChange={(checked) =>
-              setForm((f) => ({ ...f, rollePersonale: checked === true }))
-            }
+            onCheckedChange={(checked) => setForm((f) => ({ ...f, rollePersonale: checked === true }))}
           />
         </div>
       </FormModal>
 
+      {/* Bekræftelsesdialog — advarer om at ansættelser også slettes */}
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}

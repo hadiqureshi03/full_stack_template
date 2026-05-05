@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 
 type Theme = "light" | "dark";
 
+// Hvad context'en eksponerer til resten af appen
 type ThemeContextType = {
   theme: Theme;
   toggleTheme: () => void;
@@ -15,6 +16,7 @@ const ThemeContext = createContext<ThemeContextType>({
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>("light");
 
+  // Læser gemt præference fra localStorage — falder tilbage til systemets farvetema
   useEffect(() => {
     const stored = localStorage.getItem("theme") as Theme | null;
     if (stored === "dark" || (!stored && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
@@ -23,6 +25,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Skifter tema og gemmer valget i localStorage — data-theme styrer CSS-variablerne
   const toggleTheme = () => {
     const next: Theme = theme === "light" ? "dark" : "light";
     setTheme(next);

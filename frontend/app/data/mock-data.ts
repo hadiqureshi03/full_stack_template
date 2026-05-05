@@ -1,11 +1,14 @@
 import type { Afsnit, Ansaettelse, Personalegruppe, Periode, User, Vagtlag } from "~/types";
 
+// Startdata til store — bruges kun ved første indlæsning hvis localStorage er tom
+
 export const initialPerioder: Periode[] = [
   { id: "p1", navn: "Forår 2025", startdato: "2025-02-01", slutdato: "2025-05-31" },
   { id: "p2", navn: "Sommer 2025", startdato: "2025-06-01", slutdato: "2025-08-31" },
   { id: "p3", navn: "Efterår 2025", startdato: "2025-09-01", slutdato: "2025-11-30" },
 ];
 
+// u1 og u5 er admins — u2, u3, u4 og u5 er personale der kan ansættes
 export const initialUsers: User[] = [
   { id: "u1", navn: "Anna Nielsen", email: "anna@hospital.dk", rolleAdmin: true, rollePersonale: false },
   { id: "u2", navn: "Lars Christensen", email: "lars@hospital.dk", rolleAdmin: false, rollePersonale: true },
@@ -33,6 +36,7 @@ export const initialVagtlag: Vagtlag[] = [
   { id: "v3", navn: "Nattevagt" },
 ];
 
+// Demoansættelser — én pr. personalemedlem fordelt over de tre perioder
 export const initialAnsaettelser: Ansaettelse[] = [
   {
     id: "ans1",

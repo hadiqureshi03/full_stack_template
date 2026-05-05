@@ -10,21 +10,24 @@ import { FormModal } from "~/components/ui/form-modal";
 import { ConfirmDialog } from "~/components/ui/confirm-dialog";
 import { Input } from "~/components/ui/input";
 
+// Formularens felter og en tom standardværdi
 type FormState = { navn: string; startdato: string; slutdato: string };
 type FormErrors = Partial<FormState>;
-
 const emptyForm: FormState = { navn: "", startdato: "", slutdato: "" };
 
 export default function Perioder() {
+  // Data og handlinger fra store via hooks
   const { perioder, addPeriode, updatePeriode, deletePeriode } = usePerioder();
   const { toast } = useToast();
 
+  // UI-tilstande
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Periode | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Periode | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<FormErrors>({});
 
+  // Åbner modal til oprettelse
   function openCreate() {
     setEditingItem(null);
     setForm(emptyForm);
@@ -32,6 +35,7 @@ export default function Perioder() {
     setModalOpen(true);
   }
 
+  // Åbner modal til redigering med eksisterende data
   function openEdit(periode: Periode) {
     setEditingItem(periode);
     setForm({ navn: periode.navn, startdato: periode.startdato, slutdato: periode.slutdato });
@@ -39,6 +43,7 @@ export default function Perioder() {
     setModalOpen(true);
   }
 
+  // Validerer navn og at slutdato er efter startdato
   function validate(): boolean {
     const navnError = validateRequired(form.navn, "Navn");
     const dateError = validateDateRange(form.startdato, form.slutdato);
@@ -52,6 +57,7 @@ export default function Perioder() {
     return Object.keys(newErrors).length === 0;
   }
 
+  // Opretter ny eller opdaterer eksisterende periode
   function handleSubmit() {
     if (!validate()) return;
     if (editingItem) {
@@ -64,6 +70,7 @@ export default function Perioder() {
     setModalOpen(false);
   }
 
+  // Udfører sletning efter bekræftelse
   function handleDelete() {
     if (!deleteTarget) return;
     deletePeriode(deleteTarget.id);
@@ -91,6 +98,7 @@ export default function Perioder() {
         isLoading={false}
       />
 
+      {/* Modal til oprettelse og redigering — titel skifter efter kontekst */}
       <FormModal
         open={modalOpen}
         onOpenChange={setModalOpen}
@@ -123,6 +131,7 @@ export default function Perioder() {
         />
       </FormModal>
 
+      {/* Bekræftelsesdialog ved sletning */}
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}

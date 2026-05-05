@@ -7,7 +7,7 @@ import { usePersonalegrupper } from "~/hooks/use-personalegrupper";
 import { useVagtlag } from "~/hooks/use-vagtlag";
 import { useOverlapCheck } from "~/hooks/use-overlap-check";
 import { useToast } from "~/contexts/toast-context";
-import { validateRequired, validateDateRange, validateTimerPrUge } from "~/utils/validation";
+import { validateDateRange, validateTimerPrUge } from "~/utils/validation";
 import { PageHeader } from "~/components/ui/page-header";
 import { DataTable } from "~/components/ui/data-table";
 import type { Column } from "~/components/ui/data-table";
@@ -17,6 +17,7 @@ import { Input } from "~/components/ui/input";
 import { Select } from "~/components/ui/select";
 import { ColorBadge } from "~/components/ui/color-badge";
 
+// Formularens felter — timerPrUge er string så inputfeltet kan håndtere tom værdi
 type FormState = {
   userId: string;
   afsnitId: string;
@@ -26,20 +27,11 @@ type FormState = {
   startdato: string;
   slutdato: string;
 };
-
 type FormErrors = Partial<FormState>;
-
-const emptyForm: FormState = {
-  userId: "",
-  afsnitId: "",
-  personalegruppeId: "",
-  vagtlagId: "",
-  timerPrUge: "",
-  startdato: "",
-  slutdato: "",
-};
+const emptyForm: FormState = { userId: "", afsnitId: "", personalegruppeId: "", vagtlagId: "", timerPrUge: "", startdato: "", slutdato: "" };
 
 export default function Ansaettelser() {
+  // Data og handlinger fra store via hooks
   const { ansaettelser, addAnsaettelse, updateAnsaettelse, deleteAnsaettelse } = useAnsaettelser();
   const { users } = useUsers();
   const { afsnit } = useAfsnit();
@@ -48,35 +40,23 @@ export default function Ansaettelser() {
   const { hasOverlap } = useOverlapCheck();
   const { toast } = useToast();
 
+  // UI-tilstande
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Ansaettelse | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Ansaettelse | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<FormErrors>({});
 
+  // Dropdown-options — kun brugere med rolle personale kan ansættes
   const personaleOptions = useMemo(
-    () =>
-      users
-        .filter((u) => u.rollePersonale)
-        .map((u) => ({ label: u.navn, value: u.id })),
+    () => users.filter((u) => u.rollePersonale).map((u) => ({ label: u.navn, value: u.id })),
     [users]
   );
+  const afsnitOptions = useMemo(() => afsnit.map((a) => ({ label: a.navn, value: a.id })), [afsnit]);
+  const personalegruppeOptions = useMemo(() => personalegrupper.map((pg) => ({ label: pg.navn, value: pg.id })), [personalegrupper]);
+  const vagtlagOptions = useMemo(() => vagtlag.map((vl) => ({ label: vl.navn, value: vl.id })), [vagtlag]);
 
-  const afsnitOptions = useMemo(
-    () => afsnit.map((a) => ({ label: a.navn, value: a.id })),
-    [afsnit]
-  );
-
-  const personalegruppeOptions = useMemo(
-    () => personalegrupper.map((pg) => ({ label: pg.navn, value: pg.id })),
-    [personalegrupper]
-  );
-
-  const vagtlagOptions = useMemo(
-    () => vagtlag.map((vl) => ({ label: vl.navn, value: vl.id })),
-    [vagtlag]
-  );
-
+  // Åbner drawer til oprettelse
   function openCreate() {
     setEditingItem(null);
     setForm(emptyForm);
@@ -84,6 +64,7 @@ export default function Ansaettelser() {
     setDrawerOpen(true);
   }
 
+  // Åbner drawer til redigering med eksisterende data
   function openEdit(a: Ansaettelse) {
     setEditingItem(a);
     setForm({
@@ -99,6 +80,7 @@ export default function Ansaettelser() {
     setDrawerOpen(true);
   }
 
+  // Validerer alle felter — herunder overlap for samme person i samme periode
   function validate(): boolean {
     const newErrors: FormErrors = {};
 
@@ -116,13 +98,8 @@ export default function Ansaettelser() {
       else newErrors.slutdato = dateError;
     }
 
-    if (
-      form.userId &&
-      form.startdato &&
-      form.slutdato &&
-      !dateError &&
-      hasOverlap(form.userId, form.startdato, form.slutdato, editingItem?.id)
-    ) {
+    // Overlap-tjek: samme person må ikke have to ansættelser i overlappende perioder
+    if (form.userId && form.startdato && form.slutdato && !dateError && hasOverlap(form.userId, form.startdato, form.slutdato, editingItem?.id)) {
       newErrors.slutdato = "Denne person har allerede en ansættelse i den periode";
     }
 
@@ -130,6 +107,7 @@ export default function Ansaettelser() {
     return Object.keys(newErrors).length === 0;
   }
 
+  // Opretter ny eller opdaterer eksisterende ansættelse — timerPrUge konverteres fra string til number
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!validate()) return;
@@ -152,6 +130,7 @@ export default function Ansaettelser() {
     setDrawerOpen(false);
   }
 
+  // Udfører sletning efter bekræftelse
   function handleDelete() {
     if (!deleteTarget) return;
     deleteAnsaettelse(deleteTarget.id);
@@ -159,71 +138,25 @@ export default function Ansaettelser() {
     setDeleteTarget(null);
   }
 
-  function getUserNavn(userId: string) {
-    return users.find((u) => u.id === userId)?.navn ?? userId;
-  }
-
-  function getAfsnit(afsnitId: string) {
-    return afsnit.find((a) => a.id === afsnitId);
-  }
-
-  function getPersonalegruppeNavn(id: string) {
-    return personalegrupper.find((pg) => pg.id === id)?.navn ?? id;
-  }
-
-  function getVagtlagNavn(id: string) {
-    return vagtlag.find((vl) => vl.id === id)?.navn ?? id;
-  }
+  // Hjælpefunktioner til at slå navne op fra id'er i tabellen
+  function getUserNavn(userId: string) { return users.find((u) => u.id === userId)?.navn ?? userId; }
+  function getAfsnit(afsnitId: string) { return afsnit.find((a) => a.id === afsnitId); }
+  function getPersonalegruppeNavn(id: string) { return personalegrupper.find((pg) => pg.id === id)?.navn ?? id; }
+  function getVagtlagNavn(id: string) { return vagtlag.find((vl) => vl.id === id)?.navn ?? id; }
 
   const columns: Column<Ansaettelse>[] = [
+    { key: "userId", header: "Person", sortable: true, getValue: (a) => getUserNavn(a.userId), render: (a) => getUserNavn(a.userId) },
     {
-      key: "userId",
-      header: "Person",
-      sortable: true,
-      getValue: (a) => getUserNavn(a.userId),
-      render: (a) => getUserNavn(a.userId),
-    },
-    {
-      key: "afsnitId",
-      header: "Afsnit",
-      sortable: true,
+      key: "afsnitId", header: "Afsnit", sortable: true,
       getValue: (a) => getAfsnit(a.afsnitId)?.navn ?? "",
-      render: (a) => {
-        const af = getAfsnit(a.afsnitId);
-        return af ? <ColorBadge farve={af.farve} label={af.navn} /> : a.afsnitId;
-      },
+      // Viser farvet cirkel + navn via ColorBadge
+      render: (a) => { const af = getAfsnit(a.afsnitId); return af ? <ColorBadge farve={af.farve} label={af.navn} /> : a.afsnitId; },
     },
-    {
-      key: "personalegruppeId",
-      header: "Personalegruppe",
-      sortable: true,
-      getValue: (a) => getPersonalegruppeNavn(a.personalegruppeId),
-      render: (a) => getPersonalegruppeNavn(a.personalegruppeId),
-    },
-    {
-      key: "vagtlagId",
-      header: "Vagtlag",
-      sortable: true,
-      getValue: (a) => getVagtlagNavn(a.vagtlagId),
-      render: (a) => getVagtlagNavn(a.vagtlagId),
-    },
-    {
-      key: "timerPrUge",
-      header: "Timer/uge",
-      sortable: true,
-      getValue: (a) => String(a.timerPrUge),
-      render: (a) => `${a.timerPrUge} t`,
-    },
-    {
-      key: "startdato",
-      header: "Startdato",
-      sortable: true,
-    },
-    {
-      key: "slutdato",
-      header: "Slutdato",
-      sortable: true,
-    },
+    { key: "personalegruppeId", header: "Personalegruppe", sortable: true, getValue: (a) => getPersonalegruppeNavn(a.personalegruppeId), render: (a) => getPersonalegruppeNavn(a.personalegruppeId) },
+    { key: "vagtlagId", header: "Vagtlag", sortable: true, getValue: (a) => getVagtlagNavn(a.vagtlagId), render: (a) => getVagtlagNavn(a.vagtlagId) },
+    { key: "timerPrUge", header: "Timer/uge", sortable: true, getValue: (a) => String(a.timerPrUge), render: (a) => `${a.timerPrUge} t` },
+    { key: "startdato", header: "Startdato", sortable: true },
+    { key: "slutdato", header: "Slutdato", sortable: true },
   ];
 
   return (
@@ -240,75 +173,23 @@ export default function Ansaettelser() {
         isLoading={false}
       />
 
+      {/* FormDrawer bruges i stedet for modal pga. mange felter — åbner som sidepanel */}
       <FormDrawer
         open={drawerOpen}
         onOpenChange={setDrawerOpen}
         title={editingItem ? "Rediger ansættelse" : "Tilføj ansættelse"}
         onSubmit={handleSubmit}
       >
-        <Select
-          label="Person"
-          required
-          placeholder="Vælg person"
-          options={personaleOptions}
-          value={form.userId}
-          onValueChange={(v) => setForm((f) => ({ ...f, userId: v }))}
-          error={errors.userId}
-        />
-        <Select
-          label="Afsnit"
-          required
-          placeholder="Vælg afsnit"
-          options={afsnitOptions}
-          value={form.afsnitId}
-          onValueChange={(v) => setForm((f) => ({ ...f, afsnitId: v }))}
-          error={errors.afsnitId}
-        />
-        <Select
-          label="Personalegruppe"
-          required
-          placeholder="Vælg personalegruppe"
-          options={personalegruppeOptions}
-          value={form.personalegruppeId}
-          onValueChange={(v) => setForm((f) => ({ ...f, personalegruppeId: v }))}
-          error={errors.personalegruppeId}
-        />
-        <Select
-          label="Vagtlag"
-          required
-          placeholder="Vælg vagtlag"
-          options={vagtlagOptions}
-          value={form.vagtlagId}
-          onValueChange={(v) => setForm((f) => ({ ...f, vagtlagId: v }))}
-          error={errors.vagtlagId}
-        />
-        <Input
-          label="Timer pr. uge"
-          required
-          type="number"
-          value={form.timerPrUge}
-          onChange={(e) => setForm((f) => ({ ...f, timerPrUge: e.target.value }))}
-          error={errors.timerPrUge}
-          placeholder="F.eks. 37"
-        />
-        <Input
-          label="Startdato"
-          required
-          type="date"
-          value={form.startdato}
-          onChange={(e) => setForm((f) => ({ ...f, startdato: e.target.value }))}
-          error={errors.startdato}
-        />
-        <Input
-          label="Slutdato"
-          required
-          type="date"
-          value={form.slutdato}
-          onChange={(e) => setForm((f) => ({ ...f, slutdato: e.target.value }))}
-          error={errors.slutdato}
-        />
+        <Select label="Person" required placeholder="Vælg person" options={personaleOptions} value={form.userId} onValueChange={(v) => setForm((f) => ({ ...f, userId: v }))} error={errors.userId} />
+        <Select label="Afsnit" required placeholder="Vælg afsnit" options={afsnitOptions} value={form.afsnitId} onValueChange={(v) => setForm((f) => ({ ...f, afsnitId: v }))} error={errors.afsnitId} />
+        <Select label="Personalegruppe" required placeholder="Vælg personalegruppe" options={personalegruppeOptions} value={form.personalegruppeId} onValueChange={(v) => setForm((f) => ({ ...f, personalegruppeId: v }))} error={errors.personalegruppeId} />
+        <Select label="Vagtlag" required placeholder="Vælg vagtlag" options={vagtlagOptions} value={form.vagtlagId} onValueChange={(v) => setForm((f) => ({ ...f, vagtlagId: v }))} error={errors.vagtlagId} />
+        <Input label="Timer pr. uge" required type="number" value={form.timerPrUge} onChange={(e) => setForm((f) => ({ ...f, timerPrUge: e.target.value }))} error={errors.timerPrUge} placeholder="F.eks. 37" />
+        <Input label="Startdato" required type="date" value={form.startdato} onChange={(e) => setForm((f) => ({ ...f, startdato: e.target.value }))} error={errors.startdato} />
+        <Input label="Slutdato" required type="date" value={form.slutdato} onChange={(e) => setForm((f) => ({ ...f, slutdato: e.target.value }))} error={errors.slutdato} />
       </FormDrawer>
 
+      {/* Bekræftelsesdialog ved sletning */}
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}

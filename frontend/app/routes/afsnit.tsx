@@ -14,16 +14,18 @@ import { Input } from "~/components/ui/input";
 import { ColorBadge } from "~/components/ui/color-badge";
 import { ColorPicker } from "~/components/ui/color-picker";
 
+// Formularens felter og en tom standardværdi
 type FormState = { navn: string; farve: string };
 type FormErrors = Partial<FormState>;
-
 const emptyForm: FormState = { navn: "", farve: "blue" };
 
 export default function AfsnitPage() {
+  // Data og handlinger fra store via hooks
   const { afsnit, addAfsnit, updateAfsnit, deleteAfsnit } = useAfsnit();
   const { ansaettelser } = useAnsaettelser();
   const { toast } = useToast();
 
+  // UI-tilstande
   const [modalOpen, setModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Afsnit | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Afsnit | null>(null);
@@ -31,6 +33,7 @@ export default function AfsnitPage() {
   const [form, setForm] = useState<FormState>(emptyForm);
   const [errors, setErrors] = useState<FormErrors>({});
 
+  // Åbner modal til oprettelse
   function openCreate() {
     setEditingItem(null);
     setForm(emptyForm);
@@ -38,6 +41,7 @@ export default function AfsnitPage() {
     setModalOpen(true);
   }
 
+  // Åbner modal til redigering med eksisterende data
   function openEdit(a: Afsnit) {
     setEditingItem(a);
     setForm({ navn: a.navn, farve: a.farve });
@@ -45,6 +49,7 @@ export default function AfsnitPage() {
     setModalOpen(true);
   }
 
+  // Validerer at både navn og farve er udfyldt
   function validate(): boolean {
     const newErrors: FormErrors = {};
     const navnError = validateRequired(form.navn, "Navn");
@@ -55,6 +60,7 @@ export default function AfsnitPage() {
     return Object.keys(newErrors).length === 0;
   }
 
+  // Opretter nyt eller opdaterer eksisterende afsnit
   function handleSubmit() {
     if (!validate()) return;
     if (editingItem) {
@@ -67,6 +73,7 @@ export default function AfsnitPage() {
     setModalOpen(false);
   }
 
+  // Blokerer sletning hvis afsnittet bruges i en ansættelse
   function handleDeleteRequest(a: Afsnit) {
     const inUse = ansaettelser.some((ans) => ans.afsnitId === a.id);
     if (inUse) {
@@ -77,6 +84,7 @@ export default function AfsnitPage() {
     setDeleteTarget(a);
   }
 
+  // Udfører sletning efter bekræftelse
   function handleDelete() {
     if (!deleteTarget) return;
     deleteAfsnit(deleteTarget.id);
@@ -84,25 +92,17 @@ export default function AfsnitPage() {
     setDeleteTarget(null);
   }
 
+  // Farvekolonnen bruger ColorBadge til at vise en farvet cirkel
   const columns: Column<Afsnit>[] = [
-    {
-      key: "navn",
-      header: "Navn",
-      sortable: true,
-    },
-    {
-      key: "farve",
-      header: "Farve",
-      render: (a) => <ColorBadge farve={a.farve} />,
-      getValue: (a) => a.farve,
-      sortable: true,
-    },
+    { key: "navn", header: "Navn", sortable: true },
+    { key: "farve", header: "Farve", render: (a) => <ColorBadge farve={a.farve} />, getValue: (a) => a.farve, sortable: true },
   ];
 
   return (
     <>
       <PageHeader title="Afsnit" onAdd={openCreate} addLabel="Tilføj afsnit" />
 
+      {/* Vises kun ved blokeret sletning */}
       {blockError && (
         <div className="mb-4">
           <ErrorBanner message={blockError} onDismiss={() => setBlockError(null)} />
@@ -119,6 +119,7 @@ export default function AfsnitPage() {
         isLoading={false}
       />
 
+      {/* Modal til oprettelse og redigering — titel skifter efter kontekst */}
       <FormModal
         open={modalOpen}
         onOpenChange={setModalOpen}
@@ -133,6 +134,7 @@ export default function AfsnitPage() {
           error={errors.navn}
           placeholder="F.eks. Skadestue"
         />
+        {/* ColorPicker viser paletten af mulige farver */}
         <div className="flex flex-col gap-1.5">
           <label className="text-[13px] font-medium text-foreground">
             Farve <span className="text-danger">*</span>
@@ -141,12 +143,11 @@ export default function AfsnitPage() {
             value={form.farve}
             onChange={(farve) => setForm((f) => ({ ...f, farve }))}
           />
-          {errors.farve && (
-            <span className="text-xs text-danger">{errors.farve}</span>
-          )}
+          {errors.farve && <span className="text-xs text-danger">{errors.farve}</span>}
         </div>
       </FormModal>
 
+      {/* Bekræftelsesdialog ved sletning */}
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
